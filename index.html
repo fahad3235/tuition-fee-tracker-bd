@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuition Fee Tracker BD</title>
+<style>
+:root{
+  --bg:#f2f7f6; --card:#ffffff; --ink:#14231f; --muted:#5f716c;
+  --brand:#0d9488; --brand-d:#0b7c73; --line:#dde8e5;
+  --green:#16a34a; --red:#dc2626; --amber:#d97706; --blue:#2563eb;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali","Hind Siliguri",sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header.top{background:linear-gradient(135deg,#0b5e57,#0d9488);color:#fff;padding:18px 16px}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand h1{margin:0;font-size:1.35rem}
+.brand p{margin:2px 0 0;font-size:.85rem;opacity:.85}
+.langbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:7px 14px;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.langbtn:hover{background:rgba(255,255,255,.28)}
+nav.tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+nav.tabs button{flex:1;min-width:100px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:10px;border-radius:10px;font-size:.95rem;cursor:pointer}
+nav.tabs button.active{background:#fff;color:var(--brand-d);font-weight:700}
+main{padding:20px 0 40px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.stat .v{font-size:1.6rem;font-weight:800;overflow-wrap:anywhere}
+.stat .s{font-size:.75rem;color:var(--muted)}
+section.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:14px}
+section.panel h2{margin:0 0 4px;font-size:1.05rem}
+.sub{font-size:.85rem;color:var(--muted);margin:0 0 12px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar h2{margin:0;font-size:1.05rem}
+.stucard,.duerow,.histrow{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:10px 0;background:#fff}
+.stucard .head,.duerow .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.stucard h3,.duerow h3{margin:0;font-size:1.05rem}
+.roleline{color:var(--muted);font-size:.88rem;margin:2px 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.84rem;color:var(--muted);margin:6px 0}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.75rem;font-weight:700;color:#fff;background:var(--green)}
+.badge.off{background:#94a3b8}
+.badge.over{background:var(--red)}
+.badge.soon{background:var(--amber)}
+.badge.cur{background:var(--blue)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-size:.85rem;cursor:pointer}
+.btn:hover{border-color:var(--brand);color:var(--brand-d)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.btn.primary:hover{background:var(--brand-d);color:#fff}
+.btn.danger{color:var(--red)}
+.duelines{margin:8px 0;font-size:.9rem}
+.dueline{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.owed{font-size:1.25rem;font-weight:800;color:var(--red)}
+.empty{border:1px dashed var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted);font-size:.95rem;margin:10px 0;background:#fbfdfd}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filters select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fff;max-width:100%}
+.histrow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.histrow .amt{font-weight:800;font-size:1.05rem}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+footer{padding:18px 0 30px;color:var(--muted);font-size:.82rem;text-align:center}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#14231f;color:#fff;padding:10px 18px;border-radius:10px;font-size:.9rem;z-index:99;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:92vh;overflow:auto}
+.modal h3{margin:0 0 14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:.95rem;background:#fff}
+.field input[type=checkbox]{width:auto;transform:scale(1.25);margin-right:8px}
+.checkrow{display:flex;align-items:center;font-size:.9rem}
+.errbox{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:.85rem;margin-bottom:12px}
+.errbox.show{display:block}
+.mrow{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap topbar">
+    <div class="brand"><h1 id="h-title"></h1><p id="h-sub"></p></div>
+    <button id="langBtn" class="langbtn"></button>
+  </div>
+  <nav class="tabs wrap">
+    <button id="tabDash"></button>
+    <button id="tabStudents"></button>
+    <button id="tabDues"></button>
+    <button id="tabHistory"></button>
+    <button id="tabTools"></button>
+  </nav>
+</header>
+<main class="wrap">
+  <section id="view-dash">
+    <section class="panel">
+      <h2 id="dashMonth"></h2>
+      <p class="sub" id="dashSub"></p>
+      <div class="grid">
+        <div class="stat"><div class="k" id="kExpected"></div><div class="v" id="vExpected"></div></div>
+        <div class="stat"><div class="k" id="kCollected"></div><div class="v" id="vCollected"></div></div>
+        <div class="stat"><div class="k" id="kOutstanding"></div><div class="v" id="vOutstanding"></div></div>
+        <div class="stat"><div class="k" id="kRate"></div><div class="v" id="vRate"></div></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2 id="totalsH"></h2>
+      <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stat"><div class="k" id="kAllTime"></div><div class="v" id="stAllTime"></div></div>
+        <div class="stat"><div class="k" id="kArrears"></div><div class="v" id="stArrears"></div></div>
+      </div>
+    </section>
+  </section>
+
+  <section id="view-students" hidden>
+    <section class="panel">
+      <div class="toolbar"><h2 id="studentsH"></h2><button class="btn primary" id="btnAddStudent"></button></div>
+      <div id="studentList"></div>
+    </section>
+  </section>
+
+  <section id="view-dues" hidden>
+    <section class="panel">
+      <h2 id="duesH"></h2>
+      <p class="sub" id="duesSub"></p>
+      <div id="duesList"></div>
+    </section>
+  </section>
+
+  <section id="view-history" hidden>
+    <section class="panel">
+      <h2 id="histH"></h2>
+      <div class="filters">
+        <select id="histStudent"></select>
+        <select id="histMonth"></select>
+      </div>
+      <div id="histList"></div>
+    </section>
+  </section>
+
+  <section id="view-tools" hidden>
+    <section class="panel">
+      <h2 id="toolsH"></h2>
+      <p class="sub" id="toolsSub"></p>
+      <div class="tools">
+        <button class="btn" id="btnExport"></button>
+        <button class="btn" id="btnImport"></button>
+        <button class="btn danger" id="btnClear"></button>
+      </div>
+    </section>
+  </section>
+</main>
+<footer><div class="wrap"><p id="f-disclaimer"></p></div></footer>
+<div id="toast" hidden></div>
+
+<div class="overlay" id="ovStudent" hidden>
+  <div class="modal">
+    <h3 id="mStudentTitle"></h3>
+    <div class="errbox" id="mStudentErrs"></div>
+    <form id="mStudentForm">
+      <div class="field"><label id="l-s-name" for="f-s-name"></label><input id="f-s-name" maxlength="80"></div>
+      <div class="field"><label id="l-s-class" for="f-s-class"></label><input id="f-s-class" maxlength="40"></div>
+      <div class="field"><label id="l-s-fee" for="f-s-fee"></label><input id="f-s-fee" type="number" min="0" step="any" inputmode="decimal"></div>
+      <div class="field"><label id="l-s-start" for="f-s-start"></label><input id="f-s-start" type="month"></div>
+      <div class="field"><label id="l-s-phone" for="f-s-phone"></label><input id="f-s-phone" type="tel" maxlength="18"></div>
+      <div class="field checkrow"><input id="f-s-active" type="checkbox" checked><label id="l-s-active" for="f-s-active"></label></div>
+      <div class="mrow">
+        <button type="button" class="btn" id="mStudentCancel"></button>
+        <button type="submit" class="btn primary" id="mStudentSave"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="ovPay" hidden>
+  <div class="modal">
+    <h3 id="mPayTitle"></h3>
+    <div class="errbox" id="mPayErrs"></div>
+    <form id="mPayForm">
+      <div class="field"><label id="l-p-student" for="p-student"></label><select id="p-student"></select></div>
+      <div class="field"><label id="l-p-month" for="p-month"></label><input id="p-month" type="month"></div>
+      <div class="field"><label id="l-p-amount" for="p-amount"></label><input id="p-amount" type="number" min="0" step="any" inputmode="decimal"></div>
+      <div class="field"><label id="l-p-date" for="p-date"></label><input id="p-date" type="date"></div>
+      <div class="field"><label id="l-p-method" for="p-method"></label><select id="p-method"></select></div>
+      <div class="mrow">
+        <button type="button" class="btn" id="mPayCancel"></button>
+        <button type="submit" class="btn primary" id="mPaySave"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<input type="file" id="fileImport" accept="application/json,.json" hidden>
+
+<script src="logic.js"></script>
+<script>
+'use strict';
+/* Tuition Fee Tracker BD -- UI layer (DOM). Pure logic lives in logic.js. */
+const FT = FeeTracker;
+function qs(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function getAsof(){
+  const q = new URLSearchParams(location.search).get('asof');
+  return (q && FT.isDate(q)) ? q : FT.todayISO();
+}
+const asof = getAsof();
+const asofYM = FT.monthKey(asof);
+let lang = 'en';
+try { lang = localStorage.getItem(FT.LANG_KEY) || 'en'; } catch(e){}
+if (lang !== 'bn') lang = 'en';
+let students = [];
+let payments = [];
+let editingStudentId = null;
+let histFilter = { student: '', month: '' };
+
+function t(key, vars){ return FT.tr(lang, key, vars); }
+function money(p){ return FT.fmtMoney(p, lang); }
+function num(n){ return FT.fmtInt(n, lang); }
+function save(){
+  try { localStorage.setItem(FT.STORAGE_KEY, JSON.stringify({ students: students, payments: payments })); } catch(e){}
+}
+function load(){
+  try {
+    const d = JSON.parse(localStorage.getItem(FT.STORAGE_KEY));
+    if (d && Array.isArray(d.students) && Array.isArray(d.payments)) {
+      students = d.students; payments = d.payments;
+    }
+  } catch(e){}
+}
+function saveLang(){ try { localStorage.setItem(FT.LANG_KEY, lang); } catch(e){} }
+let toastTimer = null;
+function toast(msg){
+  const el = qs('toast');
+  el.textContent = msg;
+  el.hidden = false;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.hidden = true; }, 2600);
+}
+function showErrs(boxId, errs){
+  const box = qs(boxId);
+  if (!errs.length) { box.classList.remove('show'); box.innerHTML = ''; return; }
+  box.innerHTML = errs.map(function(e){ return '<div>' + esc(t(e)) + '</div>'; }).join('');
+  box.classList.add('show');
+}
+
+// ---------- tabs ----------
+const TABS = ['dash', 'students', 'dues', 'history', 'tools'];
+function setTab(name){
+  TABS.forEach(function(n){
+    qs('view-' + n).hidden = (n !== name);
+    qs('tab' + n.charAt(0).toUpperCase() + n.slice(1)).classList.toggle('active', n === name);
+  });
+}
+
+// ---------- dashboard ----------
+function renderDash(){
+  const d = FT.dashboard(students, payments, asof);
+  qs('dashMonth').textContent = FT.fmtMonth(d.ym, lang);
+  qs('vExpected').textContent = money(d.month.expected);
+  qs('vCollected').textContent = money(d.month.collected);
+  qs('vOutstanding').textContent = money(d.month.outstanding);
+  qs('vRate').textContent = FT.fmtRateLang(d.month.collected, d.month.expected, lang) + '%';
+  qs('stAllTime').textContent = money(d.allTimeCollected);
+  qs('stArrears').textContent = money(d.totalArrears);
+}
+
+// ---------- students ----------
+function renderStudents(){
+  const list = qs('studentList');
+  if (!students.length) {
+    list.innerHTML = '<div class="empty">' + esc(t('noStudents')) + '</div>';
+    return;
+  }
+  list.innerHTML = students.map(function(s){
+    const badge = s.active
+      ? ''
+      : ' <span class="badge off">' + esc(t('inactive')) + '</span>';
+    const phone = s.phone ? '<span>' + esc(s.phone) + '</span>' : '';
+    const cls = s.classGrade ? '<span>' + esc(s.classGrade) + '</span>' : '';
+    return '<div class="stucard" data-id="' + esc(s.id) + '">' +
+      '<div class="head"><h3>' + esc(s.name) + badge + '</h3></div>' +
+      '<div class="roleline">' + cls + '</div>' +
+      '<div class="meta"><span><b>' + money(s.monthlyFee) + '</b> ' + esc(t('perMonth')) +
+      '</span>' + phone + '</div>' +
+      '<div class="actions">' +
+        '<button class="btn primary" data-act="pay">' + esc(t('recordPay')) + '</button>' +
+        '<button class="btn" data-act="edit">' + esc(t('edit')) + '</button>' +
+        '<button class="btn" data-act="toggle">' + esc(s.active ? t('inactive') : t('fActive')) + '</button>' +
+        '<button class="btn danger" data-act="del">' + esc(t('del')) + '</button>' +
+      '</div></div>';
+  }).join('');
+  list.querySelectorAll('.stucard').forEach(function(card){
+    const id = card.getAttribute('data-id');
+    card.querySelector('[data-act="pay"]').onclick = function(){ openPayModal(id, null); };
+    card.querySelector('[data-act="edit"]').onclick = function(){ openStudentModal(id); };
+    card.querySelector('[data-act="toggle"]').onclick = function(){
+      const s = FT.studentById(students, id);
+      if (s) { s.active = !s.active; save(); renderAll(); }
+    };
+    card.querySelector('[data-act="del"]').onclick = function(){
+      if (!confirm(t('confirmDelStudent'))) return;
+      students = students.filter(function(x){ return x.id !== id; });
+      payments = payments.filter(function(p){ return p.studentId !== id; });
+      save(); renderAll(); toast(t('deleted'));
+    };
+  });
+}
+
+// ---------- dues ----------
+function renderDues(){
+  const list = qs('duesList');
+  const d = FT.dues(students, payments, asof);
+  if (!d.length) {
+    list.innerHTML = '<div class="empty">' + esc(t('noDues')) + '</div>';
+    return;
+  }
+  list.innerHTML = d.map(function(entry){
+    const s = entry.student;
+    const lines = entry.rows.map(function(r){
+      const info = FT.dueDayInfo(r.month, asof);
+      let tag;
+      if (info.kind === 'current') {
+        tag = '<span class="badge soon">' + esc(t('dueInDays', { n: num(info.daysLeft) })) + '</span>';
+      } else {
+        tag = '<span class="badge over">' + esc(t('overdue')) + ' &middot; ' +
+              esc(t('overdueBy', { n: num(info.daysOver) })) + '</span>';
+      }
+      return '<div class="dueline"><span>' + esc(FT.fmtMonth(r.month, lang)) +
+        ' &mdash; <b>' + money(r.due) + '</b> <span class="roleline">(' +
+        esc(t('paid')) + ' ' + money(r.paid) + ')</span></span><span>' + tag + '</span></div>';
+    }).join('');
+    const oldestUnpaid = entry.rows[0].month;
+    return '<div class="duerow" data-id="' + esc(s.id) + '">' +
+      '<div class="head"><h3>' + esc(s.name) + '</h3>' +
+      '<div>' + esc(t('totalOwed')) + ': <span class="owed">' + money(entry.totalOwed) + '</span></div></div>' +
+      '<div class="duelines">' + lines + '</div>' +
+      '<div class="actions"><button class="btn primary" data-act="pay">' + esc(t('recordPay')) + '</button></div>' +
+      '</div>';
+  }).join('');
+  list.querySelectorAll('.duerow').forEach(function(row){
+    const id = row.getAttribute('data-id');
+    row.querySelector('[data-act="pay"]').onclick = function(){
+      const entry = FT.dues(students, payments, asof).filter(function(e){ return e.student.id === id; })[0];
+      openPayModal(id, entry ? entry.rows[0].month : null);
+    };
+  });
+}
+
+// ---------- history ----------
+function renderHistory(){
+  const fs = qs('histStudent'), fm = qs('histMonth');
+  const curS = histFilter.student, curM = histFilter.month;
+  fs.innerHTML = '<option value="">' + esc(t('allStudents')) + '</option>' +
+    students.map(function(s){
+      return '<option value="' + esc(s.id) + '"' + (s.id === curS ? ' selected' : '') + '>' + esc(s.name) + '</option>';
+    }).join('');
+  const months = [];
+  payments.forEach(function(p){ if (months.indexOf(p.month) < 0) months.push(p.month); });
+  months.sort().reverse();
+  fm.innerHTML = '<option value="">' + esc(t('allMonths')) + '</option>' +
+    months.map(function(m){
+      return '<option value="' + esc(m) + '"' + (m === curM ? ' selected' : '') + '>' + esc(FT.fmtMonth(m, lang)) + '</option>';
+    }).join('');
+  const list = qs('histList');
+  const rows = FT.historyFor(payments, curS || null, curM || null);
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty">' + esc(t('noHistory')) + '</div>';
+    return;
+  }
+  list.innerHTML = rows.map(function(p){
+    const s = FT.studentById(students, p.studentId);
+    return '<div class="histrow" data-id="' + esc(p.id) + '">' +
+      '<div><b>' + esc(s ? s.name : '?') + '</b><div class="roleline">' +
+      esc(p.date) + ' &middot; ' + esc(FT.fmtMonth(p.month, lang)) + ' &middot; ' + esc(t(p.method)) +
+      '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:10px"><span class="amt">' + money(p.amount) + '</span>' +
+      '<button class="btn danger" data-act="del">' + esc(t('del')) + '</button></div></div>';
+  }).join('');
+  list.querySelectorAll('.histrow').forEach(function(row){
+    const id = row.getAttribute('data-id');
+    row.querySelector('[data-act="del"]').onclick = function(){
+      if (!confirm(t('confirmDelPayment'))) return;
+      payments = payments.filter(function(p){ return p.id !== id; });
+      save(); renderAll(); toast(t('deleted'));
+    };
+  });
+}
+
+// ---------- tools ----------
+function doExport(){
+  const payload = FT.exportPayload(students, payments, asof);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tuition-fee-tracker-bd.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function importObject(payload){
+  const res = FT.validateImport(payload, asof);
+  if (res.error) { toast(t('importBad')); return { ok: false, error: res.error }; }
+  students = res.students;
+  payments = res.payments;
+  save(); renderAll();
+  toast(t('imported', { n: num(students.length), m: num(payments.length) }));
+  return { ok: true };
+}
+
+// ---------- modals ----------
+function openStudentModal(id){
+  editingStudentId = id || null;
+  const s = id ? FT.studentById(students, id) : null;
+  qs('mStudentTitle').textContent = t(id ? 'editStudent' : 'addStudent');
+  qs('f-s-name').value = s ? s.name : '';
+  qs('f-s-class').value = s ? s.classGrade : '';
+  qs('f-s-fee').value = s ? (s.monthlyFee / 100) : '';
+  qs('f-s-start').value = s ? s.startMonth : asofYM;
+  qs('f-s-phone').value = s ? s.phone : '';
+  qs('f-s-active').checked = s ? s.active : true;
+  showErrs('mStudentErrs', []);
+  qs('ovStudent').hidden = false;
+  qs('f-s-name').focus();
+}
+function closeStudentModal(){ qs('ovStudent').hidden = true; }
+function submitStudent(e){
+  e.preventDefault();
+  const raw = {
+    id: editingStudentId || undefined,
+    name: qs('f-s-name').value,
+    classGrade: qs('f-s-class').value,
+    monthlyFee: qs('f-s-fee').value,
+    startMonth: qs('f-s-start').value,
+    phone: qs('f-s-phone').value,
+    active: qs('f-s-active').checked
+  };
+  const errs = FT.validateStudent(raw, asof);
+  showErrs('mStudentErrs', errs);
+  if (errs.length) return;
+  const s = FT.normalizeStudent(raw, asof);
+  if (editingStudentId) {
+    const i = students.findIndex(function(x){ return x.id === editingStudentId; });
+    if (i >= 0) students[i] = s;
+  } else {
+    students.push(s);
+  }
+  save(); closeStudentModal(); renderAll(); toast(t('saved'));
+}
+function openPayModal(studentId, month){
+  qs('mPayTitle').textContent = t('payTitle');
+  qs('p-student').innerHTML = students.map(function(s){
+    return '<option value="' + esc(s.id) + '"' + (s.id === studentId ? ' selected' : '') + '>' + esc(s.name) + '</option>';
+  }).join('');
+  qs('p-month').value = month || asofYM;
+  qs('p-amount').value = '';
+  qs('p-date').value = asof;
+  qs('p-method').innerHTML = FT.METHODS.map(function(m){
+    return '<option value="' + m + '">' + esc(t(m)) + '</option>';
+  }).join('');
+  showErrs('mPayErrs', []);
+  qs('ovPay').hidden = false;
+  qs('p-amount').focus();
+}
+function closePayModal(){ qs('ovPay').hidden = true; }
+function submitPay(e){
+  e.preventDefault();
+  const raw = {
+    month: qs('p-month').value,
+    amount: qs('p-amount').value,
+    date: qs('p-date').value,
+    method: qs('p-method').value
+  };
+  const errs = FT.validatePayment(raw, asof);
+  showErrs('mPayErrs', errs);
+  if (errs.length) return;
+  const p = FT.normalizePayment(raw, qs('p-student').value, asof);
+  payments.push(p);
+  save(); closePayModal(); renderAll(); toast(t('saved'));
+}
+
+// ---------- language ----------
+function applyLang(){
+  document.documentElement.lang = lang;
+  qs('langBtn').textContent = lang === 'en' ? '\u09ac\u09be\u0982\u09b2\u09be' : 'English';
+  qs('h-title').textContent = t('appTitle');
+  qs('h-sub').textContent = t('appSub');
+  qs('tabDash').textContent = t('tabDash');
+  qs('tabStudents').textContent = t('tabStudents');
+  qs('tabDues').textContent = t('tabDues');
+  qs('tabHistory').textContent = t('tabHistory');
+  qs('tabTools').textContent = t('tabTools');
+  qs('dashSub').textContent = t('statExpected') + ' / ' + t('statCollected') + ' / ' + t('statRate');
+  qs('kExpected').textContent = t('statExpected');
+  qs('kCollected').textContent = t('statCollected');
+  qs('kOutstanding').textContent = t('statOutstanding');
+  qs('kRate').textContent = t('statRate');
+  qs('totalsH').textContent = t('totCollected') + ' & ' + t('totArrears');
+  qs('kAllTime').textContent = t('totCollected');
+  qs('kArrears').textContent = t('totArrears');
+  qs('studentsH').textContent = t('studentsTitle');
+  qs('btnAddStudent').textContent = t('addStudent');
+  qs('duesH').textContent = t('duesTitle');
+  qs('duesSub').textContent = t('totalOwed');
+  qs('histH').textContent = t('histTitle');
+  qs('toolsH').textContent = t('toolsTitle');
+  qs('toolsSub').textContent = t('toolsSub');
+  qs('btnExport').textContent = t('export');
+  qs('btnImport').textContent = t('import');
+  qs('btnClear').textContent = t('clearAll');
+  qs('f-disclaimer').textContent = t('footer');
+  qs('l-s-name').textContent = t('fName');
+  qs('l-s-class').textContent = t('fClass');
+  qs('l-s-fee').textContent = t('fFee');
+  qs('l-s-start').textContent = t('fStartMonth');
+  qs('l-s-phone').textContent = t('fPhone');
+  qs('l-s-active').textContent = t('fActive');
+  qs('mStudentCancel').textContent = t('cancel');
+  qs('mStudentSave').textContent = t('save');
+  qs('l-p-student').textContent = t('fName');
+  qs('l-p-month').textContent = t('fMonth');
+  qs('l-p-amount').textContent = t('fAmount');
+  qs('l-p-date').textContent = t('fDate');
+  qs('l-p-method').textContent = t('fMethod');
+  qs('mPayCancel').textContent = t('cancel');
+  qs('mPaySave').textContent = t('save');
+  document.title = t('appTitle') + ' BD';
+}
+function renderAll(){
+  applyLang();
+  renderDash();
+  renderStudents();
+  renderDues();
+  renderHistory();
+}
+
+// ---------- init ----------
+function init(){
+  load();
+  qs('langBtn').onclick = function(){
+    lang = (lang === 'en') ? 'bn' : 'en';
+    saveLang(); renderAll();
+  };
+  qs('tabDash').onclick = function(){ setTab('dash'); };
+  qs('tabStudents').onclick = function(){ setTab('students'); };
+  qs('tabDues').onclick = function(){ setTab('dues'); };
+  qs('tabHistory').onclick = function(){ setTab('history'); };
+  qs('tabTools').onclick = function(){ setTab('tools'); };
+  qs('btnAddStudent').onclick = function(){ openStudentModal(null); };
+  qs('mStudentCancel').onclick = closeStudentModal;
+  qs('mPayCancel').onclick = closePayModal;
+  qs('ovStudent').addEventListener('click', function(e){ if (e.target === qs('ovStudent')) closeStudentModal(); });
+  qs('ovPay').addEventListener('click', function(e){ if (e.target === qs('ovPay')) closePayModal(); });
+  qs('mStudentForm').addEventListener('submit', submitStudent);
+  qs('mPayForm').addEventListener('submit', submitPay);
+  qs('histStudent').onchange = function(){ histFilter.student = qs('histStudent').value; renderHistory(); };
+  qs('histMonth').onchange = function(){ histFilter.month = qs('histMonth').value; renderHistory(); };
+  qs('btnExport').onclick = doExport;
+  qs('btnImport').onclick = function(){ qs('fileImport').click(); };
+  qs('fileImport').addEventListener('change', function(e){
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = function(){
+      let payload = null;
+      try { payload = JSON.parse(r.result); } catch(err){ payload = null; }
+      importObject(payload);
+    };
+    r.readAsText(f);
+  });
+  qs('btnClear').onclick = function(){
+    if (!confirm(t('confirmClear'))) return;
+    students = []; payments = [];
+    save(); renderAll(); toast(t('cleared'));
+  };
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { closeStudentModal(); closePayModal(); }
+  });
+  setTab('dash');
+  renderAll();
+  // test hooks (no secrets)
+  window.__TFT = FT;
+  window.__TFT_state = function(){ return { students: students, payments: payments, lang: lang, asof: asof }; };
+  window.__TFT_import = function(jsonStr){
+    let payload = null;
+    try { payload = JSON.parse(jsonStr); } catch(e){ payload = null; }
+    return importObject(payload);
+  };
+  window.__TFT_READY = true;
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
