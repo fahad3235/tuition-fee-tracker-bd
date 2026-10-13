@@ -143,6 +143,7 @@ footer{padding:18px 0 30px;color:var(--muted);font-size:.82rem;text-align:center
       <p class="sub" id="toolsSub"></p>
       <div class="tools">
         <button class="btn" id="btnExport"></button>
+        <button class="btn" id="btnExportXlsx"></button>
         <button class="btn" id="btnImport"></button>
         <button class="btn danger" id="btnClear"></button>
       </div>
@@ -192,6 +193,7 @@ footer{padding:18px 0 30px;color:var(--muted);font-size:.82rem;text-align:center
 <input type="file" id="fileImport" accept="application/json,.json" hidden>
 
 <script src="logic.js"></script>
+<script src="xlsx.js"></script>
 <script>
 'use strict';
 /* Tuition Fee Tracker BD -- UI layer (DOM). Pure logic lives in logic.js. */
@@ -400,6 +402,56 @@ function doExport(){
   a.click();
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+// Build the .xlsx bytes for the current data (pure logic, no download).
+function buildXlsxBytes(){
+  const dash = FT.dashboard(students, payments, asof);
+  const H = function(cells){ return cells.map(function(c){ return { v: c, bold: true }; }); };
+  const tk = function(paisa){ return Math.round(paisa) / 100; }; // integer paisa -> BDT number
+  const byId = {};
+  students.forEach(function(s){ byId[s.id] = s; });
+  const summaryRows = [
+    H([t('xlsItem'), t('xlsValue')]),
+    [t('fMonth'), FT.fmtMonth(dash.ym, lang)],
+    [t('statExpected'), tk(dash.month.expected)],
+    [t('statCollected'), tk(dash.month.collected)],
+    [t('statOutstanding'), tk(dash.month.outstanding)],
+    [t('statRate'), dash.month.rate + '%'],
+    [t('totCollected'), tk(dash.allTimeCollected)],
+    [t('totArrears'), tk(dash.totalArrears)]
+  ];
+  const studentRows = [H([t('fName'), t('fClass'), t('fFee'), t('fStartMonth'), t('fPhone'), t('xlsStatus')])];
+  students.forEach(function(s){
+    studentRows.push([s.name, s.classGrade, tk(s.monthlyFee), s.startMonth, s.phone,
+      s.active ? t('xlsActive') : t('inactive')]);
+  });
+  const payRows = [H([t('fDate'), t('fName'), t('fMonth'), t('fAmount'), t('fMethod')])];
+  FT.historyFor(payments).forEach(function(p){
+    const s = byId[p.studentId];
+    payRows.push([p.date, s ? s.name : '', p.month, tk(p.amount), t(p.method)]);
+  });
+  const duesRows = [H([t('fName'), t('fMonth'), t('fFee'), t('paid'), t('xlsDue')])];
+  FT.dues(students, payments, asof).forEach(function(d){
+    d.rows.forEach(function(r){
+      duesRows.push([d.student.name, r.month, tk(r.fee), tk(r.paid), tk(r.due)]);
+    });
+  });
+  return TFT_XLSX.build([
+    { name: t('tabDash'), rows: summaryRows },
+    { name: t('tabStudents'), rows: studentRows },
+    { name: t('tabHistory'), rows: payRows },
+    { name: t('tabDues'), rows: duesRows }
+  ]);
+}
+function doExportXlsx(){
+  const bytes = buildXlsxBytes();
+  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tuition-fee-tracker-bd.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
 function importObject(payload){
   const res = FT.validateImport(payload, asof);
   if (res.error) { toast(t('importBad')); return { ok: false, error: res.error }; }
@@ -508,6 +560,7 @@ function applyLang(){
   qs('toolsH').textContent = t('toolsTitle');
   qs('toolsSub').textContent = t('toolsSub');
   qs('btnExport').textContent = t('export');
+  qs('btnExportXlsx').textContent = t('exportXlsx');
   qs('btnImport').textContent = t('import');
   qs('btnClear').textContent = t('clearAll');
   qs('f-disclaimer').textContent = t('footer');
@@ -558,6 +611,7 @@ function init(){
   qs('histStudent').onchange = function(){ histFilter.student = qs('histStudent').value; renderHistory(); };
   qs('histMonth').onchange = function(){ histFilter.month = qs('histMonth').value; renderHistory(); };
   qs('btnExport').onclick = doExport;
+  qs('btnExportXlsx').onclick = doExportXlsx;
   qs('btnImport').onclick = function(){ qs('fileImport').click(); };
   qs('fileImport').addEventListener('change', function(e){
     const f = e.target.files[0];
@@ -588,6 +642,9 @@ function init(){
     let payload = null;
     try { payload = JSON.parse(jsonStr); } catch(e){ payload = null; }
     return importObject(payload);
+  };
+  window.__TFT_xlsxLen = function(){
+    try { return buildXlsxBytes().length; } catch(e){ return -1; }
   };
   window.__TFT_READY = true;
 }

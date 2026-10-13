@@ -52,7 +52,7 @@ Fixed by splitting validators: form-level (BDT strings) vs stored-level
 `normalizeStoredPayment` keeping paisa as-is. Export format is documented as
 integer paisa in the README.
 
-## Headless-Chrome smoke -- 73/73 passed, 0 failed
+## Headless-Chrome smoke -- 79/79 passed, 0 failed
 `node tests/smoke.mjs` (puppeteer-core, /opt/meta-chromium/chrome, file://, ?asof=2026-10-13)
 
 Hand-verified in browser: empty states on all views (no students / no dues /
@@ -82,3 +82,15 @@ Pure-ASCII sources: `grep -rP '[^\x00-\x7F]' .` returns zero matches.
 Bengali text exists only as \uXXXX escapes in JS strings and the i18n dict.
 No secrets, no demo data, no fabricated claims. Footer carries the
 "personal tracker, not accounting software" disclaimer in both languages.
+
+## XLSX export tests (added 2026-10-13)
+- `node tests/xlsx.test.js` -- 33/33 passed: ZIP walked entry-by-entry
+  (local headers, stored method, CRC32 match, central directory, EOCD),
+  Bengali UTF-8 intact, XML specials escaped, bold header style, 4 sheet
+  names in workbook.xml, rejects != 4 sheets, empty sheets valid.
+- Smoke (in-page): xlsx button label EN/BN, `__TFT_xlsxLen()` > 2000 bytes
+  with seeded data in both languages, `TFT_XLSX.build` verified in the real
+  browser (TextEncoder path: PK signature + content intact), real download
+  click throws nothing, 0 console/page errors, 0 network requests.
+- `xlsx.js` is dependency-free (stored ZIP entries, no deflate) so the app
+  stays 100% offline; sources remain pure ASCII (Bengali as \uXXXX).

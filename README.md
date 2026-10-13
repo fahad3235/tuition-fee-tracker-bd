@@ -35,7 +35,8 @@ collected vs outstanding.
    (prefills the oldest unpaid month).
 5. **Payment history** -- chronological list per student, filterable by student
    and month, with confirm-guarded delete.
-6. **Data tools** -- JSON export download, JSON import with strict validation
+6. **Data tools** -- JSON export download, Excel (.xlsx) export download (4 sheets:
+   dashboard summary, students, payment history, dues), JSON import with strict validation
    (malformed files are rejected and existing data is left untouched),
    confirm-guarded clear-all.
 7. **Bilingual + offline** -- EN/Bengali toggle persisted in localStorage,

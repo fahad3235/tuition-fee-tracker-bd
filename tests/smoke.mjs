@@ -241,7 +241,37 @@ await sleep(200);
 ok('importBad toast', (await page.$eval('#toast', el => el.textContent)).includes('Invalid file'));
 eq('data intact after bad import', await page.evaluate(() => window.__TFT_state().students.length), 4);
 
-// 14. mobile 390px -- no horizontal overflow
+// 14. Excel (.xlsx) export -- button present, bytes valid, click works
+await page.setViewport({ width: 1280, height: 900 });
+await page.click('#tabTools');
+await sleep(300);
+eq('xlsx button label', await page.$eval('#btnExportXlsx', el => el.textContent.trim()), 'Export Excel (.xlsx)');
+const xlsxLen = await page.evaluate(() => window.__TFT_xlsxLen());
+ok('xlsx bytes generated (' + xlsxLen + ')', xlsxLen > 2000);
+// verify the builder's TextEncoder path works in the real browser (node tests use the Buffer path)
+const sig = await page.evaluate(() => {
+  const b = TFT_XLSX.build([
+    { name: 'S1', rows: [[{ v: 'H', bold: true }], ['hello']] },
+    { name: 'S2', rows: [] }, { name: 'S3', rows: [] }, { name: 'S4', rows: [] },
+  ]);
+  let s = '';
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return { pk: b[0] === 0x50 && b[1] === 0x4B, hello: s.indexOf('<t>hello</t>') >= 0, sheet: s.indexOf('name="S1"') >= 0 };
+});
+ok('in-page xlsx PK signature', sig.pk);
+ok('in-page xlsx content intact', sig.hello && sig.sheet);
+await page.click('#btnExportXlsx'); // triggers real download; must not throw
+await sleep(600);
+// switch to Bangla and confirm the button label localizes
+await page.click('#langBtn');
+await sleep(300);
+eq('xlsx button label (bn)', await page.$eval('#btnExportXlsx', el => el.textContent.trim()), 'এক্সেল ডাউনলোড (.xlsx)');
+const xlsxLenBn = await page.evaluate(() => window.__TFT_xlsxLen());
+ok('xlsx bytes generated in bn (' + xlsxLenBn + ')', xlsxLenBn > 2000);
+await page.click('#langBtn'); // back to English
+await sleep(300);
+
+// 15. mobile 390px -- no horizontal overflow
 await page.setViewport({ width: 390, height: 844 });
 await sleep(300);
 await page.click('#tabDash');
